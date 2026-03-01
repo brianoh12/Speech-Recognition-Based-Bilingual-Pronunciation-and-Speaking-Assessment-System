@@ -1,3 +1,5 @@
+"""Pronunciation scoring model heads for fluency and prosody."""
+
 import torch
 import torch.nn as nn
 
@@ -28,7 +30,7 @@ class PronunciationModel(nn.Module):
         )
 
     def forward(self, fluency_features, prosody_features):
-        # accuracy_score = self.accuracy_layers(accuracy_features)
+        """Return predicted fluency and prosody scores."""
         fluency_score = self.fluency_layers(fluency_features)
         prosody_score = self.prosody_layers(prosody_features)
 

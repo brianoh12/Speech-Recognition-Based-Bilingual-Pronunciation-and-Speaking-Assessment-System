@@ -1,3 +1,5 @@
+"""Rule-based phoneme error analysis and feedback generation (English project)."""
+
 # phoneme_feedback.py
 
 from Levenshtein import editops

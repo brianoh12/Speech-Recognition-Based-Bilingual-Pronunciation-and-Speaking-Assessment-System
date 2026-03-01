@@ -1,10 +1,8 @@
+"""Feature extraction utilities for Korean pronunciation assessment."""
+
 import librosa
 import numpy as np
 import torch
-import torch.nn as nn
-from Levenshtein import ratio
-import Levenshtein as Lev
-from itertools import zip_longest
 from difflib import SequenceMatcher
 
 # 한국어 음소 세트 정의
@@ -27,10 +25,12 @@ def is_consonant(phoneme):
     return phoneme in KOR_CONSONANTS
 
 def phoneme_similarity_score(predicted, reference):
+    """Compute sequence similarity between predicted and reference phonemes."""
     return SequenceMatcher(None, predicted, reference).ratio()
 
 
 def extract_accuracy_features(audio_path, correct_phoneme, processor, model_phoneme, device):
+    """Extract accuracy-oriented phoneme matching features (PCC/PCV/PCT)."""
     audio, _ = librosa.load(audio_path, sr=16000)
     inputs = processor(audio, sampling_rate=16000, return_tensors="pt", padding=True).to(device)
     
@@ -59,53 +59,6 @@ def extract_accuracy_features(audio_path, correct_phoneme, processor, model_phon
     pct = SequenceMatcher(None, predicted_phonemes, correct_phonemes).ratio()
 
     return [pcc, pcv, pct]
-
-"""
-
-def extract_accuracy_features(audio_path, correct_phoneme, processor, model_phoneme, device):
-    audio, _ = librosa.load(audio_path, sr=16000)
-    inputs = processor(audio, sampling_rate=16000, return_tensors="pt", padding=True).to(device)
-    
-    with torch.no_grad():
-        logits = model_phoneme(inputs.input_values).logits
-    predicted_ids = torch.argmax(logits, dim=-1)
-    predicted_phonemes = processor.batch_decode(predicted_ids.cpu())[0].lower().split()
-    
-    if not isinstance(correct_phoneme, str):
-        print(f"Warning: correct_phoneme is not a string. Received: {correct_phoneme}")
-        return [0.0, 0.0, 0.0]
-    
-    correct_phonemes = correct_phoneme.lower().split()
-    total_phonemes = len(correct_phonemes)
-    total_consonants = sum(1 for p in correct_phonemes if is_consonant(p))
-    total_vowels = sum(1 for p in correct_phonemes if is_vowel(p))
-
-    correct_consonants_count = 0
-    correct_vowels_count = 0
-    correct_total_count = 0
-    err_penalty=0.7
-    
-    for p, c in zip_longest(predicted_phonemes, correct_phonemes):
-        
-        if p == c:
-            score = 1.0  # 정확히 일치
-        else:
-            score = 0.0  # 완전히 틀린 경우
-        
-        if is_consonant(c):
-            correct_consonants_count += score
-        elif is_vowel(c):
-            correct_vowels_count += score
-        
-        correct_total_count += score
-    
-    pcc = (correct_consonants_count / total_consonants) if total_consonants > 0 else 0
-    pcv = (correct_vowels_count / total_vowels) if total_vowels > 0 else 0
-    pct = (correct_total_count / total_phonemes) if total_phonemes > 0 else 0
-    
-    return [pcc, pcv, pct]
-
-"""
 
 ##### function to extract fluency features #####
 # 음절 수를 자동으로 추정하는 함수 (초당 7개 음절 보정 적용, 피크 감지 강화)
@@ -144,6 +97,7 @@ def calculate_voice_breaks(audio_path):
 
 # Fluency 분석 함수
 def extract_fluency_features(audio_path):
+    """Extract fluency-related features from speaking rhythm and pauses."""
     y, sr = librosa.load(audio_path, sr=None)
     intervals = librosa.effects.split(y, top_db=20)
     voiced_duration = sum(i[1] - i[0] for i in intervals) / sr
@@ -162,6 +116,7 @@ def extract_fluency_features(audio_path):
 ##### function to extract prosody features #####
 
 def extract_prosody_features(audio_path):
+    """Extract prosody-related pitch and rhythm statistics."""
 
     y, sr = librosa.load(audio_path, sr=None)
 
@@ -214,4 +169,3 @@ def extract_prosody_features(audio_path):
         rPVI_v, nPVI_v,
         percent_v
     ]
-

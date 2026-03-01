@@ -1,3 +1,5 @@
+"""Rule-based phoneme error analysis and feedback generation (Korean project)."""
+
 from Levenshtein import editops
 
 # 오류 유형별 피드백 정의

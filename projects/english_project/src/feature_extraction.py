@@ -1,8 +1,8 @@
+"""Feature extraction utilities for English pronunciation assessment."""
+
 import librosa
 import numpy as np
 import torch
-import torch.nn as nn
-from Levenshtein import ratio
 
 # CMU 음소 세트 정의
 CMU_VOWELS = {
@@ -26,6 +26,7 @@ def clean_phoneme(phoneme):
     return phoneme.replace("_err", "")
 
 def extract_accuracy_features(audio_path, correct_phoneme, processor, model_phoneme, device):
+    """Extract accuracy-oriented phoneme matching features (PCC/PCV/PCT)."""
     audio, _ = librosa.load(audio_path, sr=16000)
     inputs = processor(audio, sampling_rate=16000, return_tensors="pt", padding=True).to(device)
     
@@ -49,9 +50,6 @@ def extract_accuracy_features(audio_path, correct_phoneme, processor, model_phon
     err_penalty=0.7
     
     for p, c in zip(predicted_phonemes, correct_phonemes):
-        clean_p = clean_phoneme(p)
-        clean_c = clean_phoneme(c)
-        
         if p == c:
             score = 1.0  # 정확히 일치
         elif "_err" in p:
@@ -73,6 +71,7 @@ def extract_accuracy_features(audio_path, correct_phoneme, processor, model_phon
     return [pcc, pcv, pct]
 
 def extract_fluency_features(audio_path):
+    """Extract fluency-related features from speaking rhythm and pauses."""
     y, sr = librosa.load(audio_path)
     intervals = librosa.effects.split(y, top_db=20)
     voiced_duration = sum(i[1] - i[0] for i in intervals) / sr
@@ -88,6 +87,7 @@ def extract_fluency_features(audio_path):
     return [speaking_rate, articulation_rate, voice_breaks, voice_breaks_ratio]
 
 def extract_prosody_features(audio_path):
+    """Extract prosody-related pitch and rhythm statistics."""
     y, sr = librosa.load(audio_path, sr=None)
     energy = librosa.feature.rms(y=y)[0]
     threshold = np.mean(energy)
@@ -123,4 +123,3 @@ def extract_prosody_features(audio_path):
         rPVI_v, nPVI_v, rPVI_c, nPVI_c,
         percent_v
     ]
-

@@ -1,3 +1,5 @@
+"""ASR alignment and spectrogram visualization helpers (English project)."""
+
 import torch
 import torchaudio
 import matplotlib.pyplot as plt

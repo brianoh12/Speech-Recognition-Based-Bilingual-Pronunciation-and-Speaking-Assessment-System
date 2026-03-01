@@ -1,3 +1,5 @@
+"""ASR alignment and spectrogram visualization helpers (Korean project)."""
+
 import torch
 import torchaudio
 import matplotlib.pyplot as plt
@@ -21,9 +23,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 asr_processor = Wav2Vec2Processor.from_pretrained("slplab/wav2vec2-xls-r_Korean_ASR_by_foreigners")
 asr_model = Wav2Vec2ForCTC.from_pretrained("slplab/wav2vec2-xls-r_Korean_ASR_by_foreigners").to(device)
-
-# asr_processor = Wav2Vec2Processor.from_pretrained("w11wo/wav2vec2-xls-r-300m-korean")
-# asr_model = Wav2Vec2ForCTC.from_pretrained("w11wo/wav2vec2-xls-r-300m-korean").to(device)
 
 def visualize_asr_analysis(file_path, transcript, emissions):
     """음성 파일을 분석하고 ASR 정렬 시각화를 수행"""
