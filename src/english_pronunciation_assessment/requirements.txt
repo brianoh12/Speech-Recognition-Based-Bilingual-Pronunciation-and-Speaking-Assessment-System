@@ -1,0 +1,28 @@
+# 필수 라이브러리
+torch==2.2.2
+torchaudio==2.2.2
+torchmetrics==1.6.0
+librosa==0.10.1
+gradio==4.41.0
+numpy==1.26.0
+soundfile==0.12.1
+transformers==4.48.1
+Levenshtein==0.26.1
+matplotlib==3.8.3
+IPython==8.12.3
+tempfile
+soundfile==0.12.1
+os
+shutil
+atexit
+base64
+random
+
+# Jupyter 실행을 위한 추가 라이브러리
+jupyter==1.0.0
+jupyterlab==4.1.5
+notebook==7.1.2
+ipykernel==6.29.3
+ipywidgets==8.1.2
+jupyter_client==8.6.1
+jupyter_core==5.7.2
