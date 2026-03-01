@@ -1,28 +1,36 @@
+"""Evaluate a trained CTC phone recognizer on a test split."""
+
+import os
+from pathlib import Path
+
 import torch
-import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
-import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from transformers import AutoProcessor, AutoModelForCTC, Wav2Vec2Processor, Wav2Vec2ForCTC
+from torch.utils.data import DataLoader
+from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
 import librosa
 import evaluate
 from tqdm import tqdm
 from datasets import load_from_disk
 
 
+# Paths can be overridden via environment variables for reproducible runs.
+MODEL_PATH = Path(
+    os.environ.get("ASR_MODEL_PATH", "./trainer/korean_by_foreigner_word_recognition")
+)
+DATASET_PATH = Path(os.environ.get("ASR_DATASET_PATH", "./data/new_hf_datasets"))
+OUTPUT_FILE = Path(os.environ.get("ASR_EVAL_OUTPUT", "./results/test_result.txt"))
+
 # 1. GPU 설정
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # 2. 저장된 모델과 프로세서 로드
-model_path = "/home/brian/joint-apa-mdd-mtl/auxiliary-phone-recognition/Korean_by_외국인_recognition/for_word_ASR/trainer/korean_by_foreigner_word_recognition_ep50_lr0.0001_warm0.1_type-linear"
+model_path = str(MODEL_PATH)
 processor = Wav2Vec2Processor.from_pretrained(model_path)
 model = Wav2Vec2ForCTC.from_pretrained(model_path).to(device)
 model.eval()
 
 # 3. 테스트셋 로드
-dataset_path = "/home/brian/joint-apa-mdd-mtl/data/korean_data/for_word_ASR/new_hf_datasets"
+dataset_path = str(DATASET_PATH)
 test_ds = load_from_disk(dataset_path)["test"]
 
 # 4. 데이터 Collator 정의
@@ -98,8 +106,9 @@ def per(preds, refs):
 per_score = per(predictions, references)
 
 # 7. 결과를 파일로 저장
-output_file = "/home/brian/joint-apa-mdd-mtl/auxiliary-phone-recognition/Korean_by_외국인_recognition/for_word_ASR/results/xls-r_test_result_50ep_best_model.txt"
-with open(output_file, "w") as f:
+output_file = OUTPUT_FILE
+output_file.parent.mkdir(parents=True, exist_ok=True)
+with output_file.open("w") as f:
     # 7.1. WER, CER, PER 기록
     f.write(f"Word Error Rate (WER) on the test set: {wer:.4f}\n")
     f.write(f"Character Error Rate (CER) on the test set: {cer:.4f}\n")

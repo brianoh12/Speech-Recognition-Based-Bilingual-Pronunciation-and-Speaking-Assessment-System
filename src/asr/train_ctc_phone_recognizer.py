@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Dict, List, Union
 
@@ -147,19 +148,19 @@ def prepare_trainer(args, processor, train_ds, test_ds):
 if __name__ == "__main__":
     args = prepare_arguments()
 
-    #외국인의 한국어 발음 음성인식기 학습시
-    dataset_path = "/home/brian/joint-apa-mdd-mtl/data/korean_data/for_word_ASR/new_hf_datasets"
-    vocab_path = "/home/brian/joint-apa-mdd-mtl/data/korean_data/for_word_ASR/new_hf_datasets/vocab.json"
+    # Paths can be overridden through environment variables.
+    dataset_path = Path(os.environ.get("ASR_DATASET_PATH", "./data/new_hf_datasets"))
+    vocab_path = Path(os.environ.get("ASR_VOCAB_PATH", str(dataset_path / "vocab.json")))
 
-    # 데이터 로드
-    dataset = load_from_disk(dataset_path)  # 데이터셋 로드 추가
+    # Dataset directory should include train/valid/test splits.
+    dataset = load_from_disk(str(dataset_path))
     train_ds = dataset["train"]
     valid_ds = dataset["valid"] 
     test_ds = dataset["test"] 
 
     # 토크나이저 및 프로세서 준비
     tokenizer = Wav2Vec2CTCTokenizer(
-        vocab_path, unk_token="<unk>", pad_token="<pad>", word_delimiter_token=" ", do_phonemize=False
+        str(vocab_path), unk_token="<unk>", pad_token="<pad>", word_delimiter_token=" ", do_phonemize=False
     )
     feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained(args.model_name_or_path)
     processor = Wav2Vec2Processor(feature_extractor=feature_extractor, tokenizer=tokenizer)
@@ -169,12 +170,6 @@ if __name__ == "__main__":
     train_ds = train_ds.map(prepare_dataset)
     valid_ds = valid_ds.map(prepare_dataset)
     test_ds = test_ds.map(prepare_dataset)
-
-    # 이미 map(prepare_dataset) + save_to_disk 했다면 아래 코드 실행
-    # train_ds = load_from_disk("/home/brian/joint-apa-mdd-mtl/data/korean_data/for_word_ASR/new_hf_datasets/train")
-    # valid_ds = load_from_disk("/home/brian/joint-apa-mdd-mtl/data/korean_data/for_word_ASR/new_hf_datasets/valid")
-    # test_ds  = load_from_disk("/home/brian/joint-apa-mdd-mtl/data/korean_data/for_word_ASR/new_hf_datasets/test")
-
 
     # WER 평가 메트릭 준비
     wer_metric = evaluate.load("wer")
