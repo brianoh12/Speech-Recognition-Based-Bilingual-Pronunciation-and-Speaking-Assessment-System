@@ -10,13 +10,6 @@ transformers==4.48.1
 Levenshtein==0.26.1
 matplotlib==3.8.3
 IPython==8.12.3
-tempfile
-soundfile==0.12.1
-os
-shutil
-atexit
-base64
-random
 
 # Jupyter 실행을 위한 추가 라이브러리
 jupyter==1.0.0

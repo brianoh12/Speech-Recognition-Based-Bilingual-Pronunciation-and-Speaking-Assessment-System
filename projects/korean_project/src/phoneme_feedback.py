@@ -127,8 +127,6 @@ def find_word_for_phoneme(word_phoneme_map, phoneme_index):
 
 
 def analyze_phoneme_errors(correct_phoneme, predicted_phoneme, correct_sentence):
-    from Levenshtein import editops
-
     correct_tokens = correct_phoneme.strip().split()
     predicted_tokens = predicted_phoneme.strip().split()
     word_phoneme_map = map_phonemes_to_words(correct_phoneme, correct_sentence)
@@ -191,60 +189,3 @@ def analyze_phoneme_errors(correct_phoneme, predicted_phoneme, correct_sentence)
         feedback_list.append("문제있는 발음을 찾지 못하였습니다!")
 
     return feedback_list
-
-
-"""
-
-def analyze_phoneme_errors(correct_phoneme, predicted_phoneme, correct_sentence):
-
-    # 정답 음소와 예측 음소를 비교하여 오류 유형을 분석하고 피드백을 제공합니다.
-    # 오류 발생 시 해당 단어를 함께 제공.
-
-    correct_tokens = correct_phoneme.strip().split()
-    predicted_tokens = predicted_phoneme.strip().split()
-    word_phoneme_map = map_phonemes_to_words(correct_phoneme, correct_sentence)
-
-    feedback_list = []
-    ops = editops(correct_tokens, predicted_tokens)
-
-    for op, i, j in ops:
-        word = find_word_for_phoneme(word_phoneme_map, i)
-
-        if op == 'replace':
-            pair = (correct_tokens[i], predicted_tokens[j])
-            if pair in VARIANTS_FEEDBACK:
-                feedback_kr, feedback_en = VARIANTS_FEEDBACK[pair]
-                feedback_list.append(f"- 발음 변이(Variants) 오류 발생: {pair}\n  ▸ [KR] {feedback_kr}\n  ▸ [EN] {feedback_en}")
-            elif pair in SUBSTITUTION_FEEDBACK:
-                feedback_kr, feedback_en = SUBSTITUTION_FEEDBACK[pair]
-                feedback_list.append(f"- 음소 대체(Substitution) 오류 발생: {pair}\n  ▸ [KR] {feedback_kr}\n  ▸ [EN] {feedback_en}")
-
-        elif op == 'delete':
-            phoneme = correct_tokens[i]
-            if phoneme in DELETION_FEEDBACK:
-                feedback_kr, feedback_en = DELETION_FEEDBACK[phoneme]
-                feedback_list.append(f"- 음소 삭제(Deletion) 오류 발생: {phoneme}\n  ▸ [KR] {feedback_kr}\n  ▸ [EN] {feedback_en}")
-
-        elif op == 'insert':
-            inserted_phoneme = predicted_tokens[j]
-            if inserted_phoneme in INSERTION_FEEDBACK:
-                feedback_kr, feedback_en = INSERTION_FEEDBACK[inserted_phoneme]
-                feedback_list.append(f"- 음소 삽입(Insertion) 오류 발생 in '{word}': {inserted_phoneme}\n  ▸ [KR] {feedback_kr}\n  ▸ [EN] {feedback_en}")
-
-
-    for i in range(len(correct_tokens)):
-        for (correct_phoneme, predicted_group), (feedback_kr, feedback_en) in GROUP_SUBSTITUTIONS.items():
-            group_len = len(predicted_group)
-            if correct_tokens[i] == correct_phoneme and predicted_tokens[i:i + group_len] == list(predicted_group):
-                word = find_word_for_phoneme(word_phoneme_map, i)
-                feedback_list.append(
-                    f"- 음소 대체(Substitution) 오류 발생 in '{word}': {correct_phoneme} → {' '.join(predicted_group)}\n"
-                    f"  ▸ [KR] {feedback_kr}\n"
-                    f"  ▸ [EN] {feedback_en}"
-                )
-
-    if not feedback_list:
-        feedback_list.append("문제있는 발음을 찾지 못하였습니다!")
-
-    return feedback_list
-"""

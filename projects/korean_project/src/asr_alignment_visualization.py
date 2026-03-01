@@ -4,13 +4,10 @@ import torch
 import torchaudio
 import matplotlib.pyplot as plt
 from transformers import Wav2Vec2Processor, Wav2Vec2ForCTC
-import IPython
 from dataclasses import dataclass
-from transformers import WhisperProcessor, WhisperForConditionalGeneration
 
 import tempfile
 import soundfile as sf
-import os
 import shutil
 import atexit
 
@@ -42,11 +39,6 @@ def visualize_asr_analysis(file_path, transcript, emissions):
         ax.set_ylabel("Labels")
         fig.colorbar(img, ax=ax, shrink=0.6, location="bottom")
         plt.show()
-
-    # print("\n**ASR Alignment Visualization**")
-    # print(f"Transcribed Sentence: {transcript}")
-    # IPython.display.display(IPython.display.Audio(file_path))
-    # plot_emission(emission)
 
     # 2 단계 Generate alignment probability (trellis) + Visualization
     transcript = "|" + "|".join(transcript.split()) + "|"
@@ -279,55 +271,38 @@ def visualize_asr_analysis(file_path, transcript, emissions):
 
         return fig
 
-
-    # 단어별 음성 영구 저장할 디렉토리 생성 (존재하지 않으면 자동 생성)
-    # save_dir = "./saved_audio"
-    # os.makedirs(save_dir, exist_ok=True)
-
-    # 임시 디렉토리 생성: 평가 세션 동안만 사용할 디렉트리
+    # 임시 디렉토리 생성: 평가 세션 동안만 사용하는 디렉토리
     temp_audio_dir = tempfile.mkdtemp(prefix="temp_saved_audio")
     atexit.register(lambda: shutil.rmtree(temp_audio_dir, ignore_errors=True))
     save_dir = temp_audio_dir
 
-    # **6단계: 모든 세그먼트 오디오 출력 함수 정의
+    # 6단계: 모든 세그먼트 오디오 출력 함수
     def display_all_segments():
-
-        word_audio_segments = []  # New list to collect word audio info
+        word_audio_segments = []
         ratio = wav.size(1) / trellis.size(0)
         for i, word in enumerate(word_segments):
             x0 = int(ratio * word.start)
             x1 = int(ratio * word.end)
 
-            ###########
-            # **Waveform 범위 초과 방지**
-            x0 = max(0, x0)  # 시작점이 0보다 작아지지 않도록
-            x1 = min(wav.size(1), x1)  # 종료점이 전체 길이를 넘지 않도록
+            # Waveform 범위 초과 방지
+            x0 = max(0, x0)
+            x1 = min(wav.size(1), x1)
 
-            # **길이가 0이면 스킵**
+            # 길이가 0이면 스킵
             if x1 <= x0:
                 continue
-            ###########
-
-            print(f"{word.label} ({word.score:.2f}): {x0 / sample_rate:.3f} - {x1 / sample_rate:.3f} sec")
             segment = wav[:, x0:x1]
-            
-            ############################# 추가된 부분 ############################
-            # Save the segment to a temporary file
+
+            # Save each segment to a temporary file.
             temp_segment_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False, dir=save_dir)
             sf.write(temp_segment_file.name, segment.cpu().numpy().squeeze(), sample_rate)
-            
-            # Append a tuple: (label, score, file_path)
+
+            # (label, score, file_path)
             word_audio_segments.append((word.label, word.score, temp_segment_file.name))
 
         return word_audio_segments
-            ############################# 추가된 부분 ############################
-        
-            # IPython.display.display(IPython.display.Audio(segment.cpu().numpy(), rate=sample_rate)) # 각 단어 분리 음성
 
-     # 5 단계 & 6단계 시각화
-    print(transcript)
-    # IPython.display.display(IPython.display.Audio(file_path))
-    # display_all_segments()
+    # 5 단계 & 6 단계 시각화
 
     word_segments_audio = display_all_segments()
     
@@ -337,5 +312,4 @@ def visualize_asr_analysis(file_path, transcript, emissions):
     plt.close(figure) # 그림 닫기
 
     return tmpfile.name, word_segments_audio
-
 
